@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WORK DESK — 案件管理</title>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600&family=DM+Mono:wght@300;400;500&family=Zen+Kaku+Gothic+New:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f2ec;
+    --ink: #1a1714;
+    --muted: #7a7570;
+    --line: #d8d3cb;
+    --accent: #2d5a3d;
+    --accent2: #c84b2f;
+    --accent3: #d4a017;
+    --card: #faf8f4;
+    --tag-slack: #4a154b;
+    --tag-backlog: #0052cc;
+    --tag-verbal: #5a3e00;
+    --prod-sign:  #00875a;
+    --prod-corp:  #1b3f72;
+    --prod-way:   #c45c1a;
+    --prod-saiyo: #6b3fa0;
+    --prod-wadax: #0e7a99;
+    --panel-w: 340px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    grid-template-rows: auto 1fr;
+    min-height: 100vh;
+    transition: grid-template-columns 0.3s ease;
+  }
+
+  /* ── Header ── */
+  header {
+    grid-column: 1 / -1;
+    border-bottom: 1px solid var(--line);
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { font-family: 'DM Mono', monospace; font-weight: 300; font-size: 12px; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; }
+  .logo span { color: var(--ink); font-weight: 500; }
+  .header-date { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-left: auto; letter-spacing: 0.05em; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    border-right: 1px solid var(--line);
+    padding: 20px 0;
+    background: var(--card);
+    position: sticky;
+    top: 53px;
+    height: calc(100vh - 53px);
+    overflow-y: auto;
+  }
+  .sidebar-section { padding: 0 16px; margin-bottom: 20px; }
+  .sidebar-divider { height: 1px; background: var(--line); margin: 4px 16px 16px; }
+  .sidebar-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .filter-btn { display: flex; align-items: center; gap: 7px; width: 100%; padding: 6px 8px; background: none; border: none; border-radius: 4px; font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 12px; color: var(--ink); cursor: pointer; text-align: left; transition: background 0.15s; margin-bottom: 1px; }
+  .filter-btn:hover { background: var(--line); }
+  .filter-btn.active { background: var(--ink); color: white; }
+  .filter-btn .count { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 10px; opacity: 0.5; }
+  .dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .dot.round { border-radius: 50%; }
+
+  /* ── Main ── */
+  main { padding: 24px 28px; overflow-y: auto; min-width: 0; }
+
+  /* ── Input ── */
+  .input-box { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 18px; margin-bottom: 24px; }
+  .input-box-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .input-row { display: flex; gap: 10px; align-items: flex-start; }
+  textarea#rawInput { flex: 1; min-height: 72px; padding: 9px 11px; background: var(--bg); border: 1px solid var(--line); border-radius: 5px; font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 13px; color: var(--ink); resize: vertical; line-height: 1.6; transition: border-color 0.2s; }
+  textarea#rawInput:focus { outline: none; border-color: var(--accent); }
+  textarea#rawInput::placeholder { color: var(--muted); opacity: 0.6; }
+
+  .btn-ai { padding: 9px 16px; background: var(--ink); color: white; border: none; border-radius: 5px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.08em; cursor: pointer; transition: opacity 0.2s; white-space: nowrap; flex-shrink: 0; }
+  .btn-ai:hover { opacity: 0.75; }
+  .btn-ai:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  #previewArea { display: none; background: #eef5f0; border: 1px solid #b8d4be; border-radius: 6px; padding: 13px 15px; margin-top: 10px; font-size: 13px; line-height: 1.7; }
+  #previewArea .preview-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  #previewArea .preview-field { display: flex; gap: 8px; margin-bottom: 3px; }
+  #previewArea .preview-key { color: var(--muted); font-size: 12px; min-width: 80px; flex-shrink: 0; }
+  .preview-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+  .btn-confirm { padding: 6px 13px; background: var(--accent); color: white; border: none; border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: opacity 0.2s; }
+  .btn-confirm:hover { opacity: 0.8; }
+  .btn-cancel { padding: 6px 13px; background: none; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; }
+
+  .section-header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+  .section-title { font-family: 'Shippori Mincho', serif; font-size: 15px; font-weight: 600; }
+  .section-count { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+
+  /* ── Task cards ── */
+  .task-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 28px; }
+
+  .task-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-left: 3px solid transparent;
+    border-radius: 7px;
+    padding: 12px 14px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: start;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    cursor: pointer;
+  }
+  .task-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); background: #fff; }
+  .task-card.selected { border-color: var(--accent) !important; background: #fff; box-shadow: 0 2px 12px rgba(45,90,61,0.12); }
+  .task-card.urgent { border-left-color: var(--accent2); }
+  .task-card.done { opacity: 0.42; }
+
+  .task-name { font-size: 13px; font-weight: 700; margin-bottom: 6px; line-height: 1.4; }
+  .task-meta { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+  .tag { padding: 2px 7px; border-radius: 3px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.04em; color: white; }
+  .tag.slack   { background: var(--tag-slack); }
+  .tag.backlog { background: var(--tag-backlog); }
+  .tag.verbal  { background: var(--tag-verbal); }
+  .tag.other   { background: var(--muted); }
+  .tag.sign    { background: var(--prod-sign); }
+  .tag.corp    { background: var(--prod-corp); }
+  .tag.way     { background: var(--prod-way); }
+  .tag.saiyo   { background: var(--prod-saiyo); }
+  .tag.wadax   { background: var(--prod-wadax); }
+  .tag.cat     { background: none; border: 1px solid currentColor; color: var(--muted); font-size: 9px; }
+  .task-date { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+  .task-date.near { color: var(--accent2); font-weight: 500; }
+
+  .task-right { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
+  .status-badge { padding: 2px 9px; border-radius: 20px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.04em; border: 1px solid currentColor; white-space: nowrap; }
+  .status-wip     { color: #c0392b; border-color: #c0392b; background: #fdf0ef; font-weight:500; }
+  .status-review  { color: #c47a00; border-color: #c47a00; background: #fdf6e3; }
+  .status-done    { color: #999;    border-color: #ccc;    background: #f5f5f5; }
+  .status-waiting { color: #a0a0a0; border-color: #d0d0d0; }
+
+  .task-actions { display: flex; gap: 3px; }
+  .icon-btn { width: 24px; height: 24px; border: none; background: none; cursor: pointer; border-radius: 4px; font-size: 13px; color: var(--muted); display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+  .icon-btn:hover { background: var(--line); }
+
+  .empty { text-align: center; padding: 44px 0; color: var(--muted); font-size: 13px; line-height: 2; }
+
+  .dot-anim { display: inline-flex; gap: 3px; }
+  .dot-anim span { width: 4px; height: 4px; border-radius: 50%; background: white; animation: blink 1.2s infinite; }
+  .dot-anim span:nth-child(2) { animation-delay: 0.2s; }
+  .dot-anim span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,80%,100%{opacity:0.3} 40%{opacity:1} }
+
+  /* ── Detail Panel ── */
+  .detail-panel {
+    position: fixed;
+    top: 53px;
+    right: 0;
+    width: var(--panel-w);
+    height: calc(100vh - 53px);
+    background: var(--card);
+    border-left: 1px solid var(--line);
+    z-index: 90;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+    display: flex;
+    flex-direction: column;
+  }
+  .detail-panel.open { transform: translateX(0); }
+
+  .panel-header {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    background: var(--card);
+    z-index: 1;
+  }
+
+  .panel-title {
+    flex: 1;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+    outline: none;
+    border: none;
+    background: none;
+    color: var(--ink);
+    width: 100%;
+    cursor: text;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: background 0.15s;
+  }
+  .panel-title:hover { background: var(--bg); }
+  .panel-title:focus { background: var(--bg); }
+
+  .panel-close {
+    width: 26px;
+    height: 26px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--muted);
+    flex-shrink: 0;
+    border-radius: 4px;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .panel-close:hover { background: var(--line); }
+
+  .panel-body { padding: 16px 20px; flex: 1; }
+
+  /* Status switcher */
+  .panel-status-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .status-chip {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    border: 1px solid var(--line);
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .status-chip:hover { border-color: #aaa; }
+  .status-chip.active-wip     { border-color: #c0392b; color: #c0392b; background: #fdf0ef; font-weight:500; }
+  .status-chip.active-review  { border-color: #c47a00; color: #c47a00; background: #fdf6e3; }
+  .status-chip.active-done    { border-color: #999;    color: #999;    background: #f5f5f5; }
+  .status-chip.active-waiting { border-color: #a0a0a0; color: #a0a0a0; background: #f0ede8; }
+
+  /* Panel fields */
+  .panel-field { margin-bottom: 14px; }
+  .panel-field-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+  .panel-input {
+    width: 100%;
+    padding: 7px 9px;
+    background: var(--bg);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    transition: border-color 0.15s, background 0.15s;
+    cursor: text;
+  }
+  .panel-input:hover { border-color: var(--line); }
+  .panel-input:focus { outline: none; border-color: var(--accent); background: #fff; }
+  select.panel-input { cursor: pointer; }
+
+  .panel-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .panel-divider { height: 1px; background: var(--line); margin: 18px 0; }
+
+  .panel-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    gap: 8px;
+    background: var(--card);
+    position: sticky;
+    bottom: 0;
+  }
+  .btn-save {
+    flex: 1;
+    padding: 9px;
+    background: var(--ink);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-save:hover { opacity: 0.75; }
+  .btn-delete-sm {
+    padding: 9px 14px;
+    background: none;
+    color: var(--accent2);
+    border: 1px solid var(--accent2);
+    border-radius: 5px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-delete-sm:hover { background: var(--accent2); color: white; }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(26,23,20,0.5); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--card); border-radius: 10px; padding: 26px; width: 460px; max-width: 92vw; max-height: 82vh; overflow-y: auto; }
+  .modal-title { font-family: 'Shippori Mincho', serif; font-size: 17px; margin-bottom: 18px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .field-group { margin-bottom: 12px; }
+  .field-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .field-input { width: 100%; padding: 7px 10px; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 13px; color: var(--ink); }
+  .field-input:focus { outline: none; border-color: var(--accent); }
+  select.field-input { cursor: pointer; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 18px; justify-content: flex-end; }
+
+  .toast { position: fixed; bottom: 22px; right: 22px; background: var(--ink); color: white; padding: 9px 16px; border-radius: 6px; font-family: 'DM Mono', monospace; font-size: 12px; z-index: 300; transform: translateY(60px); opacity: 0; transition: all 0.3s; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="layout" id="layout">
+  <header>
+    <div class="logo">WORK <span>DESK</span></div>
+    <div class="header-date" id="headerDate"></div>
+    <button class="btn-ai" onclick="openNewModal()" style="margin-left:16px;padding:6px 13px;font-size:10px;">+ 手動で追加</button>
+  </header>
+
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">ステータス</div>
+      <button class="filter-btn active" onclick="setFilter('all','status',this)">
+        <span>すべて</span><span class="count" id="cnt-all">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('waiting','status',this)">
+        <span>待機中</span><span class="count" id="cnt-waiting">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('wip','status',this)">
+        <span>進行中</span><span class="count" id="cnt-wip">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('review','status',this)">
+        <span>確認待ち</span><span class="count" id="cnt-review">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('done','status',this)">
+        <span>完了</span><span class="count" id="cnt-done">0</span>
+      </button>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">商材</div>
+      <button class="filter-btn" onclick="setFilter('sign','product',this)">
+        <span class="dot" style="background:var(--prod-sign)"></span><span>GMOサイン</span><span class="count" id="cnt-sign">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('corp','product',this)">
+        <span class="dot" style="background:var(--prod-corp)"></span><span>コーポレート</span><span class="count" id="cnt-corp">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('way','product',this)">
+        <span class="dot" style="background:var(--prod-way)"></span><span>Way</span><span class="count" id="cnt-way">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('saiyo','product',this)">
+        <span class="dot" style="background:var(--prod-saiyo)"></span><span>採用</span><span class="count" id="cnt-saiyo">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('wadax','product',this)">
+        <span class="dot" style="background:var(--prod-wadax)"></span><span>WADAX</span><span class="count" id="cnt-wadax">0</span>
+      </button>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">カテゴリ</div>
+      <button class="filter-btn" onclick="setFilter('web','category',this)">
+        <span class="dot round" style="background:#2a6e4e"></span><span>Web</span><span class="count" id="cnt-web">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('illust','category',this)">
+        <span class="dot round" style="background:#8a3060"></span><span>イラスト</span><span class="count" id="cnt-illust">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('dtp','category',this)">
+        <span class="dot round" style="background:#555"></span><span>DTP</span><span class="count" id="cnt-dtp">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('bnr','category',this)">
+        <span class="dot round" style="background:#a05020"></span><span>bnr</span><span class="count" id="cnt-bnr">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('lp','category',this)">
+        <span class="dot round" style="background:#1e5a8a"></span><span>LP</span><span class="count" id="cnt-lp">0</span>
+      </button>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">依頼経路</div>
+      <button class="filter-btn" onclick="setFilter('slack','source',this)">
+        <span class="dot" style="background:var(--tag-slack)"></span><span>Slack</span><span class="count" id="cnt-slack">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('backlog','source',this)">
+        <span class="dot" style="background:var(--tag-backlog)"></span><span>Backlog</span><span class="count" id="cnt-backlog">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('verbal','source',this)">
+        <span class="dot" style="background:var(--tag-verbal)"></span><span>口頭・MTG</span><span class="count" id="cnt-verbal">0</span>
+      </button>
+    </div>
+  </aside>
+
+  <main>
+    <div class="input-box">
+      <div class="input-box-label">AI に依頼内容を貼り付け or 話しかける</div>
+      <div class="input-row">
+        <textarea id="rawInput" placeholder="例）Slackで田中さんから「GMOサインのバナー作って欲しい、締切は6/10」という依頼が来た
+
+BacklogのチケットをそのままペーストもOK"></textarea>
+        <button class="btn-ai" onclick="analyzeWithAI()" id="aiBtn">AIで解析</button>
+      </div>
+      <div id="previewArea">
+        <div class="preview-title">解析結果 — 確認してください</div>
+        <div id="previewContent"></div>
+        <div class="preview-actions">
+          <button class="btn-confirm" onclick="confirmAdd()">✓ 登録する</button>
+          <button class="btn-cancel" onclick="cancelPreview()">キャンセル</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title" id="sectionTitle">全案件</div>
+      <div class="section-count" id="sectionCount"></div>
+    </div>
+    <div class="task-list" id="taskList"></div>
+  </main>
+</div>
+
+<!-- Detail Panel -->
+<div class="detail-panel" id="detailPanel">
+  <div class="panel-header">
+    <input class="panel-title" id="p-name" type="text" placeholder="案件名">
+    <button class="panel-close" onclick="closePanel()">✕</button>
+  </div>
+  <div class="panel-body">
+    <!-- Status chips -->
+    <div class="panel-status-row" id="statusChips">
+      <button class="status-chip" data-s="waiting" onclick="setStatus('waiting')">待機中</button>
+      <button class="status-chip" data-s="wip"     onclick="setStatus('wip')">進行中</button>
+      <button class="status-chip" data-s="review"  onclick="setStatus('review')">確認待ち</button>
+      <button class="status-chip" data-s="done"    onclick="setStatus('done')">完了</button>
+    </div>
+
+    <div class="panel-row">
+      <div class="panel-field">
+        <div class="panel-field-label">商材</div>
+        <select class="panel-input" id="p-product">
+          <option value="">— なし —</option>
+          <option value="sign">GMOサイン</option>
+          <option value="corp">コーポレート</option>
+          <option value="way">Way</option>
+          <option value="saiyo">採用</option>
+          <option value="wadax">WADAX</option>
+        </select>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">カテゴリ</div>
+        <select class="panel-input" id="p-category">
+          <option value="">— なし —</option>
+          <option value="web">Web</option>
+          <option value="illust">イラスト</option>
+          <option value="dtp">DTP</option>
+          <option value="bnr">bnr</option>
+          <option value="lp">LP</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="panel-row">
+      <div class="panel-field">
+        <div class="panel-field-label">依頼経路</div>
+        <select class="panel-input" id="p-source">
+          <option value="slack">Slack</option>
+          <option value="backlog">Backlog</option>
+          <option value="verbal">口頭・MTG</option>
+          <option value="other">その他</option>
+        </select>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">依頼者</div>
+        <input class="panel-input" id="p-client" type="text" placeholder="田中さん">
+      </div>
+    </div>
+
+    <div class="panel-field">
+      <div class="panel-field-label">依頼元 URL</div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input class="panel-input" id="p-source-url" type="url" placeholder="https://xxx.backlog.com/view/PROJ-123" style="flex:1">
+        <a id="p-source-url-link" href="#" target="_blank" style="display:none;color:var(--accent);font-size:18px;text-decoration:none;flex-shrink:0" title="開く">↗</a>
+      </div>
+    </div>
+
+    <div class="panel-field">
+      <div class="panel-field-label">作業場所</div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input class="panel-input" id="p-work-url" type="text" placeholder="https://figma.com/... または「社内サーバー/project/...」" style="flex:1">
+        <a id="p-work-url-link" href="#" target="_blank" style="display:none;color:var(--accent);font-size:18px;text-decoration:none;flex-shrink:0" title="開く">↗</a>
+      </div>
+    </div>
+
+    <div class="panel-divider"></div>
+
+    <div class="panel-field">
+      <div class="panel-field-label">受注日</div>
+      <input class="panel-input" id="p-received" type="date">
+    </div>
+    <div class="panel-row">
+      <div class="panel-field">
+        <div class="panel-field-label">初校締切</div>
+        <input class="panel-input" id="p-draft" type="date">
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Fix締切</div>
+        <input class="panel-input" id="p-fix" type="date">
+      </div>
+    </div>
+
+    <div class="panel-divider"></div>
+
+    <div class="panel-field">
+      <div class="panel-field-label">メモ</div>
+      <input class="panel-input" id="p-memo" type="text" placeholder="関連リンクや補足など">
+    </div>
+  </div>
+  <div class="panel-footer">
+    <button class="btn-save" onclick="savePanel()">保存</button>
+    <button class="btn-delete-sm" onclick="deletePanelTask()">削除</button>
+  </div>
+</div>
+
+<!-- New/Edit Modal (手動追加用) -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">案件を追加</div>
+    <div class="field-group">
+      <div class="field-label">案件名</div>
+      <input class="field-input" id="f-name" placeholder="GMOサイン LP制作">
+    </div>
+    <div class="field-row">
+      <div class="field-group" style="margin-bottom:0">
+        <div class="field-label">商材</div>
+        <select class="field-input" id="f-product">
+          <option value="">— なし —</option>
+          <option value="sign">GMOサイン</option>
+          <option value="corp">コーポレート</option>
+          <option value="way">Way</option>
+          <option value="saiyo">採用</option>
+          <option value="wadax">WADAX</option>
+        </select>
+      </div>
+      <div class="field-group" style="margin-bottom:0">
+        <div class="field-label">カテゴリ</div>
+        <select class="field-input" id="f-category">
+          <option value="">— なし —</option>
+          <option value="web">Web</option>
+          <option value="illust">イラスト</option>
+          <option value="dtp">DTP</option>
+          <option value="bnr">bnr</option>
+          <option value="lp">LP</option>
+        </select>
+      </div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="field-row">
+      <div class="field-group" style="margin-bottom:0">
+        <div class="field-label">依頼経路</div>
+        <select class="field-input" id="f-source">
+          <option value="slack">Slack</option>
+          <option value="backlog">Backlog</option>
+          <option value="verbal">口頭・MTG</option>
+          <option value="other">その他</option>
+        </select>
+      </div>
+      <div class="field-group" style="margin-bottom:0">
+        <div class="field-label">依頼者</div>
+        <input class="field-input" id="f-client" placeholder="田中さん">
+      </div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="field-row">
+      <div class="field-group" style="margin-bottom:0">
+        <div class="field-label">受注日</div>
+        <input class="field-input" type="date" id="f-received">
+      </div>
+      <div class="field-group" style="margin-bottom:0">
+        <div class="field-label">ステータス</div>
+        <select class="field-input" id="f-status">
+          <option value="waiting">待機中</option>
+          <option value="wip">進行中</option>
+          <option value="review">確認待ち</option>
+          <option value="done">完了</option>
+        </select>
+      </div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="field-row">
+      <div class="field-group" style="margin-bottom:0">
+        <div class="field-label">初校締切</div>
+        <input class="field-input" type="date" id="f-draft">
+      </div>
+      <div class="field-group" style="margin-bottom:0">
+        <div class="field-label">Fix締切</div>
+        <input class="field-input" type="date" id="f-fix">
+      </div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="field-group">
+      <div class="field-label">メモ</div>
+      <input class="field-input" id="f-memo" placeholder="関連リンクや補足など">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn-confirm" onclick="saveFromModal()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'workdesk_tasks_v2';
+function loadTasks() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch { return []; } }
+function saveTasks(t) { localStorage.setItem(STORAGE_KEY, JSON.stringify(t)); }
+
+let tasks = loadTasks();
+let currentFilter = 'all';
+let currentFilterType = 'status';
+let panelTaskId = null;
+let pendingTask = null;
+
+const PRODUCT_LABEL  = { sign:'GMOサイン', corp:'コーポレート', way:'Way', saiyo:'採用', wadax:'WADAX' };
+const CATEGORY_LABEL = { web:'Web', illust:'イラスト', dtp:'DTP', bnr:'bnr', lp:'LP' };
+const SOURCE_LABEL   = { slack:'Slack', backlog:'Backlog', verbal:'口頭', other:'other' };
+const STATUS_LABEL   = { waiting:'待機中', wip:'進行中', review:'確認待ち', done:'完了' };
+const STATUS_CLASS   = { waiting:'status-waiting', wip:'status-wip', review:'status-review', done:'status-done' };
+
+function today() { return new Date().toISOString().slice(0,10); }
+function daysUntil(d) {
+  if (!d) return null;
+  const now = new Date(); now.setHours(0,0,0,0);
+  return Math.ceil((new Date(d)-now)/86400000);
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  const x = new Date(d);
+  return `${x.getMonth()+1}/${x.getDate()}`;
+}
+
+function updateHeaderDate() {
+  const d = new Date();
+  const days = ['日','月','火','水','木','金','土'];
+  document.getElementById('headerDate').textContent =
+    `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${days[d.getDay()]})`;
+}
+
+// ── Counts ──
+function updateCounts() {
+  const s = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  s('cnt-all', tasks.length);
+  ['waiting','wip','review','done'].forEach(x => s(`cnt-${x}`, tasks.filter(t=>t.status===x).length));
+  ['sign','corp','way','saiyo','wadax'].forEach(x => s(`cnt-${x}`, tasks.filter(t=>t.product===x).length));
+  ['web','illust','dtp','bnr','lp'].forEach(x => s(`cnt-${x}`, tasks.filter(t=>t.category===x).length));
+  ['slack','backlog','verbal'].forEach(x => s(`cnt-${x}`, tasks.filter(t=>t.source===x).length));
+}
+
+// ── Filter ──
+function setFilter(f, type, btn) {
+  currentFilter = f; currentFilterType = type;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+function filterTasks() {
+  if (currentFilter === 'all') return tasks;
+  if (currentFilterType === 'status')   return tasks.filter(t=>t.status===currentFilter);
+  if (currentFilterType === 'product')  return tasks.filter(t=>t.product===currentFilter);
+  if (currentFilterType === 'category') return tasks.filter(t=>t.category===currentFilter);
+  if (currentFilterType === 'source')   return tasks.filter(t=>t.source===currentFilter);
+  return tasks;
+}
+
+// ── Render ──
+function render() {
+  updateCounts();
+  const filtered = filterTasks();
+  const list  = document.getElementById('taskList');
+  const title = document.getElementById('sectionTitle');
+  const cnt   = document.getElementById('sectionCount');
+  const allLabels = { all:'全案件', waiting:'待機中', wip:'進行中', review:'確認待ち', done:'完了',
+    ...PRODUCT_LABEL, ...CATEGORY_LABEL,
+    slack:'Slack経由', backlog:'Backlog経由', verbal:'口頭・MTG経由' };
+  title.textContent = allLabels[currentFilter] || '案件一覧';
+  cnt.textContent = `${filtered.length}件`;
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty">案件がありません<br>上のフォームから追加してください</div>';
+    return;
+  }
+
+  const statusOrder = { wip:0, review:1, done:2, waiting:3 };
+  const sorted = [...filtered].sort((a,b) => {
+    const so = (statusOrder[a.status]??9) - (statusOrder[b.status]??9);
+    if (so !== 0) return so;
+    if (a.fix&&b.fix) return a.fix.localeCompare(b.fix);
+    if (a.fix) return -1; if (b.fix) return 1; return 0;
+  });
+
+  list.innerHTML = sorted.map(t => {
+    const days = daysUntil(t.fix);
+    const isUrgent = days!==null && days<=3 && t.status!=='done';
+    const dateNear = days!==null && days<=7 && t.status!=='done';
+    let dl = '';
+    if (t.fix) { if(days===0) dl='今日'; else if(days<0) dl=`${Math.abs(days)}日超過`; else dl=`${days}日後`; }
+    const prodTag = t.product ? `<span class="tag ${t.product}">${PRODUCT_LABEL[t.product]||t.product}</span>` : '';
+    const catTag  = t.category ? `<span class="tag cat">${CATEGORY_LABEL[t.category]||t.category}</span>` : '';
+    const isSelected = t.id === panelTaskId;
+
+    return `<div class="task-card ${isUrgent?'urgent':''} ${t.status==='done'?'done':''} ${isSelected?'selected':''}"
+      onclick="openPanel('${t.id}')">
+      <div>
+        <div class="task-name">${t.name||'（無題）'}</div>
+        <div class="task-meta">
+          ${prodTag}${catTag}
+          ${t.client ? `<span class="task-date">${t.client}</span>` : ''}
+          ${t.received ? `<span class="task-date">受注 ${fmtDate(t.received)}</span>` : ''}
+          ${t.draft ? `<span class="task-date">初校 ${fmtDate(t.draft)}</span>` : ''}
+          ${t.fix ? `<span class="task-date ${dateNear?'near':''}">Fix ${fmtDate(t.fix)}${dl?` (${dl})`:''}</span>` : ''}
+        </div>
+        ${t.memo ? `<div class="task-date" style="margin-top:5px;font-size:11px">${t.memo}</div>` : ''}
+      </div>
+      <div class="task-right">
+        <span class="status-badge ${STATUS_CLASS[t.status]}">${STATUS_LABEL[t.status]}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Detail Panel ──
+function openPanel(id) {
+  const t = tasks.find(t=>t.id===id);
+  if (!t) return;
+  panelTaskId = id;
+
+  document.getElementById('p-name').value     = t.name||'';
+  document.getElementById('p-product').value  = t.product||'';
+  document.getElementById('p-category').value = t.category||'';
+  document.getElementById('p-source').value   = t.source||'slack';
+  document.getElementById('p-client').value   = t.client||'';
+  document.getElementById('p-source-url').value = t.sourceUrl||'';
+  document.getElementById('p-work-url').value   = t.workUrl||'';
+  document.getElementById('p-received').value = t.received||'';
+  document.getElementById('p-draft').value    = t.draft||'';
+  document.getElementById('p-fix').value      = t.fix||'';
+  document.getElementById('p-memo').value     = t.memo||'';
+
+  // リンクアイコンの表示切り替え
+  const sLink = document.getElementById('p-source-url-link');
+  const wLink = document.getElementById('p-work-url-link');
+  function updateLink(input, linkEl) {
+    const v = input.value.trim();
+    const isUrl = v.startsWith('http://') || v.startsWith('https://');
+    linkEl.style.display = (v && isUrl) ? 'inline' : 'none';
+    if (isUrl) linkEl.href = v;
+  }
+  const sInput = document.getElementById('p-source-url');
+  const wInput = document.getElementById('p-work-url');
+  updateLink(sInput, sLink); updateLink(wInput, wLink);
+  sInput.oninput = () => updateLink(sInput, sLink);
+  wInput.oninput = () => updateLink(wInput, wLink);
+  updateStatusChips(t.status);
+
+  document.getElementById('detailPanel').classList.add('open');
+  render(); // update selected highlight
+}
+
+function closePanel() {
+  panelTaskId = null;
+  document.getElementById('detailPanel').classList.remove('open');
+  render();
+}
+
+function updateStatusChips(status) {
+  document.querySelectorAll('.status-chip').forEach(c => {
+    c.className = 'status-chip';
+    if (c.dataset.s === status) c.classList.add(`active-${status}`);
+  });
+}
+
+function setStatus(s) {
+  updateStatusChips(s);
+  // reflect immediately on the task card for feel-good UX, save on button press
+  const t = tasks.find(t=>t.id===panelTaskId);
+  if (t) { t.status = s; saveTasks(tasks); render(); }
+}
+
+function savePanel() {
+  const idx = tasks.findIndex(t=>t.id===panelTaskId);
+  if (idx < 0) return;
+  const status = document.querySelector('.status-chip[class*="active-"]')?.dataset.s || tasks[idx].status;
+  tasks[idx] = {
+    ...tasks[idx],
+    name:      document.getElementById('p-name').value.trim(),
+    product:   document.getElementById('p-product').value||null,
+    category:  document.getElementById('p-category').value||null,
+    source:    document.getElementById('p-source').value,
+    client:    document.getElementById('p-client').value.trim(),
+    sourceUrl: document.getElementById('p-source-url').value.trim(),
+    workUrl:   document.getElementById('p-work-url').value.trim(),
+    received:  document.getElementById('p-received').value,
+    draft:     document.getElementById('p-draft').value,
+    fix:       document.getElementById('p-fix').value,
+    status,
+    memo:      document.getElementById('p-memo').value.trim(),
+  };
+  saveTasks(tasks);
+  render();
+  showToast('保存しました ✓');
+}
+
+function deletePanelTask() {
+  if (!confirm('この案件を削除しますか？')) return;
+  tasks = tasks.filter(t=>t.id!==panelTaskId);
+  saveTasks(tasks);
+  closePanel();
+  showToast('削除しました');
+}
+
+// ── AI ──
+async function analyzeWithAI() {
+  const raw = document.getElementById('rawInput').value.trim();
+  if (!raw) return;
+  const btn = document.getElementById('aiBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="dot-anim"><span></span><span></span><span></span></span>';
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `あなたはインハウスデザイナーの案件管理アシスタントです。入力テキストから案件情報を抽出し、JSONのみで返してください。
+今日の日付: ${today()}
+商材: sign(GMOサイン), corp(コーポレート), way(Way), saiyo(採用), wadax(WADAX)
+カテゴリ: web, illust(イラスト), dtp, bnr(バナー), lp
+依頼経路: slack, backlog, verbal(口頭・MTG), other
+JSON: {"name":"","source":"","product":null,"category":null,"client":"","received":null,"draft":null,"fix":null,"status":"waiting","memo":""}
+JSONのみ返してください。`,
+        messages: [{ role:'user', content: raw }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content.map(c=>c.text||'').join('');
+    const parsed = JSON.parse(text.replace(/```json|```/g,'').trim());
+    pendingTask = { ...parsed, id: crypto.randomUUID() };
+    showPreview(pendingTask);
+  } catch(e) { showToast('解析に失敗しました。もう一度お試しください。'); }
+  btn.disabled = false;
+  btn.textContent = 'AIで解析';
+}
+
+function showPreview(t) {
+  const html = [
+    ['案件名', t.name||'—'],
+    ['商材', t.product?(PRODUCT_LABEL[t.product]||t.product):'—'],
+    ['カテゴリ', t.category?(CATEGORY_LABEL[t.category]||t.category):'—'],
+    ['依頼経路', SOURCE_LABEL[t.source]||t.source],
+    ['依頼者', t.client||'—'],
+    ['受注日', t.received||'—'],
+    ['初校締切', t.draft||'—'],
+    ['Fix締切', t.fix||'—'],
+    ['メモ', t.memo||'—'],
+  ].map(([k,v])=>`<div class="preview-field"><span class="preview-key">${k}</span><span>${v}</span></div>`).join('');
+  document.getElementById('previewContent').innerHTML = html;
+  document.getElementById('previewArea').style.display = 'block';
+}
+
+function confirmAdd() {
+  if (!pendingTask) return;
+  tasks.unshift(pendingTask);
+  saveTasks(tasks);
+  pendingTask = null;
+  document.getElementById('previewArea').style.display = 'none';
+  document.getElementById('rawInput').value = '';
+  render();
+  showToast('案件を登録しました ✓');
+}
+function cancelPreview() {
+  pendingTask = null;
+  document.getElementById('previewArea').style.display = 'none';
+}
+
+// ── Modal (手動追加) ──
+function openNewModal() {
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-product').value = '';
+  document.getElementById('f-category').value = '';
+  document.getElementById('f-source').value = 'slack';
+  document.getElementById('f-client').value = '';
+  document.getElementById('f-received').value = today();
+  document.getElementById('f-draft').value = '';
+  document.getElementById('f-fix').value = '';
+  document.getElementById('f-status').value = 'waiting';
+  document.getElementById('f-memo').value = '';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+function saveFromModal() {
+  const t = {
+    id: crypto.randomUUID(),
+    name:     document.getElementById('f-name').value.trim(),
+    product:  document.getElementById('f-product').value||null,
+    category: document.getElementById('f-category').value||null,
+    source:   document.getElementById('f-source').value,
+    client:   document.getElementById('f-client').value.trim(),
+    received: document.getElementById('f-received').value,
+    draft:    document.getElementById('f-draft').value,
+    fix:      document.getElementById('f-fix').value,
+    status:   document.getElementById('f-status').value,
+    memo:     document.getElementById('f-memo').value.trim(),
+  };
+  if (!t.name) { showToast('案件名を入力してください'); return; }
+  tasks.unshift(t);
+  saveTasks(tasks);
+  closeModal();
+  render();
+  showToast('追加しました ✓');
+}
+
+document.getElementById('modalOverlay').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2500);
+}
+
+// ── Sample data ──
+if (tasks.length === 0) {
+  tasks = [
+    { id:crypto.randomUUID(), name:'ハンコズ キャラクター使用ルール デザイン', product:'sign', category:'dtp', source:'slack', client:'中島さん・安倍さん', received:'2025-12-25', draft:'2026-04-02', fix:'2026-05-07', status:'done', memo:'★260507 fix版送付済み' },
+    { id:crypto.randomUUID(), name:'サービスLP バナー制作', product:'sign', category:'bnr', source:'backlog', client:'田中さん', received:'2026-05-15', draft:'2026-05-28', fix:'2026-06-05', status:'wip', memo:'' },
+    { id:crypto.randomUUID(), name:'コーポレートサイト TOPリニューアル', product:'corp', category:'web', source:'verbal', client:'鈴木さん', received:'2026-05-10', draft:'', fix:'2026-06-20', status:'waiting', memo:'' }
+  ];
+  saveTasks(tasks);
+}
+
+updateHeaderDate();
+render();
+</script>
+</body>
+</html>
