@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WORK DESK — 案件管理</title>
+<title>TAKAHASHI TASK — 案件管理</title>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600&family=DM+Mono:wght@300;400;500&family=Zen+Kaku+Gothic+New:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -346,7 +346,7 @@
 
 <div class="layout" id="layout">
   <header>
-    <div class="logo">WORK <span>DESK</span></div>
+    <div class="logo">TAKAHASHI <span>TASK</span></div>
     <div class="header-date" id="headerDate"></div>
     <button class="btn-ai" onclick="openNewModal()" style="margin-left:16px;padding:6px 13px;font-size:10px;">+ 手動で追加</button>
   </header>
@@ -424,24 +424,6 @@
   </aside>
 
   <main>
-    <div class="input-box">
-      <div class="input-box-label">AI に依頼内容を貼り付け or 話しかける</div>
-      <div class="input-row">
-        <textarea id="rawInput" placeholder="例）Slackで田中さんから「GMOサインのバナー作って欲しい、締切は6/10」という依頼が来た
-
-BacklogのチケットをそのままペーストもOK"></textarea>
-        <button class="btn-ai" onclick="analyzeWithAI()" id="aiBtn">AIで解析</button>
-      </div>
-      <div id="previewArea">
-        <div class="preview-title">解析結果 — 確認してください</div>
-        <div id="previewContent"></div>
-        <div class="preview-actions">
-          <button class="btn-confirm" onclick="confirmAdd()">✓ 登録する</button>
-          <button class="btn-cancel" onclick="cancelPreview()">キャンセル</button>
-        </div>
-      </div>
-    </div>
-
     <div class="section-header">
       <div class="section-title" id="sectionTitle">全案件</div>
       <div class="section-count" id="sectionCount"></div>
