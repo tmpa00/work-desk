@@ -58,6 +58,56 @@
     top: 0;
     z-index: 100;
   }
+
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    flex-shrink: 0;
+  }
+  .hamburger span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: var(--ink);
+    border-radius: 2px;
+    transition: all 0.25s;
+  }
+
+  @media (max-width: 680px) {
+    .layout { grid-template-columns: 1fr; }
+    .hamburger { display: flex; }
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 260px;
+      height: 100vh;
+      z-index: 200;
+      transform: translateX(-100%);
+      transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+      padding-top: 60px;
+      box-shadow: none;
+    }
+    .sidebar.open {
+      transform: translateX(0);
+      box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+    }
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.3);
+      z-index: 190;
+    }
+    .sidebar-overlay.open { display: block; }
+    main { padding: 16px; }
+    .detail-panel { width: 100vw; }
+  }
   .logo { font-family: 'DM Mono', monospace; font-weight: 300; font-size: 12px; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; }
   .logo span { color: var(--ink); font-weight: 500; }
   .header-date { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-left: auto; letter-spacing: 0.05em; }
@@ -346,12 +396,16 @@
 
 <div class="layout" id="layout">
   <header>
+    <button class="hamburger" onclick="toggleSidebar()" id="hamburger">
+      <span></span><span></span><span></span>
+    </button>
     <div class="logo">TAKAHASHI <span>TASK</span></div>
     <div class="header-date" id="headerDate"></div>
     <button class="btn-ai" onclick="openNewModal()" style="margin-left:16px;padding:6px 13px;font-size:10px;">+ 手動で追加</button>
   </header>
 
-  <aside class="sidebar">
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-section">
       <div class="sidebar-label">ステータス</div>
       <button class="filter-btn active" onclick="setFilter('all','status',this)">
@@ -639,6 +693,11 @@ const CATEGORY_LABEL = { web:'Web', illust:'イラスト', dtp:'DTP', bnr:'bnr',
 const SOURCE_LABEL   = { slack:'Slack', backlog:'Backlog', verbal:'口頭', other:'other' };
 const STATUS_LABEL   = { waiting:'待機中', wip:'進行中', review:'確認待ち', done:'完了' };
 const STATUS_CLASS   = { waiting:'status-waiting', wip:'status-wip', review:'status-review', done:'status-done' };
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
 
 function today() { return new Date().toISOString().slice(0,10); }
 function daysUntil(d) {
@@ -939,16 +998,6 @@ function showToast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg; el.classList.add('show');
   setTimeout(()=>el.classList.remove('show'), 2500);
-}
-
-// ── Sample data ──
-if (tasks.length === 0) {
-  tasks = [
-    { id:crypto.randomUUID(), name:'ハンコズ キャラクター使用ルール デザイン', product:'sign', category:'dtp', source:'slack', client:'中島さん・安倍さん', received:'2025-12-25', draft:'2026-04-02', fix:'2026-05-07', status:'done', memo:'★260507 fix版送付済み' },
-    { id:crypto.randomUUID(), name:'サービスLP バナー制作', product:'sign', category:'bnr', source:'backlog', client:'田中さん', received:'2026-05-15', draft:'2026-05-28', fix:'2026-06-05', status:'wip', memo:'' },
-    { id:crypto.randomUUID(), name:'コーポレートサイト TOPリニューアル', product:'corp', category:'web', source:'verbal', client:'鈴木さん', received:'2026-05-10', draft:'', fix:'2026-06-20', status:'waiting', memo:'' }
-  ];
-  saveTasks(tasks);
 }
 
 updateHeaderDate();
