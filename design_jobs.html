@@ -13,7 +13,6 @@
     --line: #d8d3cb;
     --accent: #2d5a3d;
     --accent2: #c84b2f;
-    --accent3: #d4a017;
     --card: #faf8f4;
     --tag-slack: #4a154b;
     --tag-backlog: #0052cc;
@@ -23,7 +22,11 @@
     --prod-way:   #c45c1a;
     --prod-saiyo: #6b3fa0;
     --prod-wadax: #0e7a99;
-    --panel-w: 340px;
+    --panel-w: 360px;
+    --col-wip:    #c0392b;
+    --col-review: #c47a00;
+    --col-done:   #888;
+    --col-hold:   #a0a0a0;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -37,80 +40,34 @@
     overflow-x: hidden;
   }
 
-  .layout {
+  /* ── Layout ── */
+  .app {
     display: grid;
-    grid-template-columns: 220px 1fr;
+    grid-template-columns: 200px 1fr;
     grid-template-rows: auto 1fr;
     min-height: 100vh;
-    transition: grid-template-columns 0.3s ease;
   }
 
   /* ── Header ── */
   header {
     grid-column: 1 / -1;
     border-bottom: 1px solid var(--line);
-    padding: 16px 28px;
+    padding: 14px 24px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
     background: var(--bg);
     position: sticky;
     top: 0;
     z-index: 100;
   }
-
-  .hamburger {
-    display: none;
-    flex-direction: column;
-    gap: 5px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 4px;
-    flex-shrink: 0;
-  }
-  .hamburger span {
-    display: block;
-    width: 20px;
-    height: 2px;
-    background: var(--ink);
-    border-radius: 2px;
-    transition: all 0.25s;
-  }
-
-  @media (max-width: 680px) {
-    .layout { grid-template-columns: 1fr; }
-    .hamburger { display: flex; }
-    .sidebar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 260px;
-      height: 100vh;
-      z-index: 200;
-      transform: translateX(-100%);
-      transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
-      padding-top: 60px;
-      box-shadow: none;
-    }
-    .sidebar.open {
-      transform: translateX(0);
-      box-shadow: 4px 0 20px rgba(0,0,0,0.15);
-    }
-    .sidebar-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.3);
-      z-index: 190;
-    }
-    .sidebar-overlay.open { display: block; }
-    main { padding: 16px; }
-    .detail-panel { width: 100vw; }
-  }
+  .hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 4px; flex-shrink: 0; }
+  .hamburger span { display: block; width: 20px; height: 2px; background: var(--ink); border-radius: 2px; }
   .logo { font-family: 'DM Mono', monospace; font-weight: 300; font-size: 12px; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; }
   .logo span { color: var(--ink); font-weight: 500; }
-  .header-date { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-left: auto; letter-spacing: 0.05em; }
+  .header-date { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-left: auto; }
+  .btn-add { padding: 7px 14px; background: var(--ink); color: white; border: none; border-radius: 5px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.08em; cursor: pointer; transition: opacity 0.2s; white-space: nowrap; margin-left: 12px; }
+  .btn-add:hover { opacity: 0.75; }
 
   /* ── Sidebar ── */
   .sidebar {
@@ -118,12 +75,12 @@
     padding: 20px 0;
     background: var(--card);
     position: sticky;
-    top: 53px;
-    height: calc(100vh - 53px);
+    top: 49px;
+    height: calc(100vh - 49px);
     overflow-y: auto;
   }
-  .sidebar-section { padding: 0 16px; margin-bottom: 20px; }
-  .sidebar-divider { height: 1px; background: var(--line); margin: 4px 16px 16px; }
+  .sidebar-section { padding: 0 14px; margin-bottom: 20px; }
+  .sidebar-divider { height: 1px; background: var(--line); margin: 4px 14px 16px; }
   .sidebar-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
   .filter-btn { display: flex; align-items: center; gap: 7px; width: 100%; padding: 6px 8px; background: none; border: none; border-radius: 4px; font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 12px; color: var(--ink); cursor: pointer; text-align: left; transition: background 0.15s; margin-bottom: 1px; }
   .filter-btn:hover { background: var(--line); }
@@ -132,59 +89,99 @@
   .dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
   .dot.round { border-radius: 50%; }
 
-  /* ── Main ── */
-  main { padding: 24px 28px; overflow-y: auto; min-width: 0; }
+  /* ── Main / Kanban ── */
+  main {
+    padding: 20px 20px 40px;
+    overflow-x: auto;
+    overflow-y: auto;
+  }
 
-  /* ── Input ── */
-  .input-box { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 18px; margin-bottom: 24px; }
-  .input-box-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
-  .input-row { display: flex; gap: 10px; align-items: flex-start; }
-  textarea#rawInput { flex: 1; min-height: 72px; padding: 9px 11px; background: var(--bg); border: 1px solid var(--line); border-radius: 5px; font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 13px; color: var(--ink); resize: vertical; line-height: 1.6; transition: border-color 0.2s; }
-  textarea#rawInput:focus { outline: none; border-color: var(--accent); }
-  textarea#rawInput::placeholder { color: var(--muted); opacity: 0.6; }
+  .kanban {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(240px, 1fr));
+    gap: 14px;
+    min-width: 960px;
+    align-items: start;
+  }
 
-  .btn-ai { padding: 9px 16px; background: var(--ink); color: white; border: none; border-radius: 5px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.08em; cursor: pointer; transition: opacity 0.2s; white-space: nowrap; flex-shrink: 0; }
-  .btn-ai:hover { opacity: 0.75; }
-  .btn-ai:disabled { opacity: 0.4; cursor: not-allowed; }
+  /* ── Kanban column ── */
+  .kanban-col { display: flex; flex-direction: column; gap: 0; }
 
-  #previewArea { display: none; background: #eef5f0; border: 1px solid #b8d4be; border-radius: 6px; padding: 13px 15px; margin-top: 10px; font-size: 13px; line-height: 1.7; }
-  #previewArea .preview-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
-  #previewArea .preview-field { display: flex; gap: 8px; margin-bottom: 3px; }
-  #previewArea .preview-key { color: var(--muted); font-size: 12px; min-width: 80px; flex-shrink: 0; }
-  .preview-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .kanban-col-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 7px 7px 0 0;
+    border: 1px solid var(--line);
+    border-bottom: none;
+    background: var(--card);
+    position: sticky;
+    top: 0;
+  }
+  .kanban-col-header .col-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+  }
+  .kanban-col-header .col-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+  .col-bar {
+    height: 3px;
+    border-radius: 0;
+    margin: 0;
+  }
 
-  .btn-confirm { padding: 6px 13px; background: var(--accent); color: white; border: none; border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: opacity 0.2s; }
-  .btn-confirm:hover { opacity: 0.8; }
-  .btn-cancel { padding: 6px 13px; background: none; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; }
+  /* column accent colors */
+  .col-wip    .col-bar { background: var(--col-wip); }
+  .col-review .col-bar { background: var(--col-review); }
+  .col-done   .col-bar { background: var(--col-done); }
+  .col-hold   .col-bar { background: var(--col-hold); }
+  .col-wip    .kanban-col-header { border-top: 2px solid var(--col-wip); }
+  .col-review .kanban-col-header { border-top: 2px solid var(--col-review); }
+  .col-done   .kanban-col-header { border-top: 2px solid var(--col-done); }
+  .col-hold   .kanban-col-header { border-top: 2px solid var(--col-hold); }
+  .col-wip    .col-label { color: var(--col-wip); }
+  .col-review .col-label { color: var(--col-review); }
+  .col-done   .col-label { color: var(--col-done); }
+  .col-hold   .col-label { color: var(--col-hold); }
 
-  .section-header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
-  .section-title { font-family: 'Shippori Mincho', serif; font-size: 15px; font-weight: 600; }
-  .section-count { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+  .kanban-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--line);
+    border-top: none;
+    border-radius: 0 0 7px 7px;
+    overflow: hidden;
+    background: #f0ede7;
+    min-height: 60px;
+    padding: 6px;
+    gap: 6px;
+  }
 
-  /* ── Task cards ── */
-  .task-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 28px; }
-
+  /* ── Task card ── */
   .task-card {
     background: var(--card);
     border: 1px solid var(--line);
-    border-left: 3px solid transparent;
-    border-radius: 7px;
-    padding: 12px 14px;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 8px;
-    align-items: start;
-    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    border-radius: 6px;
+    padding: 11px 12px;
     cursor: pointer;
+    transition: box-shadow 0.15s, background 0.15s;
   }
-  .task-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); background: #fff; }
-  .task-card.selected { border-color: var(--accent) !important; background: #fff; box-shadow: 0 2px 12px rgba(45,90,61,0.12); }
-  .task-card.urgent { border-left-color: var(--accent2); }
-  .task-card.done { opacity: 0.42; }
+  .task-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); background: #fff; }
+  .task-card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(45,90,61,0.15); }
+  .task-card.urgent { border-left: 3px solid var(--accent2); }
+  .col-done .task-card { opacity: 0.55; }
 
-  .task-name { font-size: 13px; font-weight: 700; margin-bottom: 6px; line-height: 1.4; }
-  .task-meta { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
-  .tag { padding: 2px 7px; border-radius: 3px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.04em; color: white; }
+  .task-name { font-size: 12px; font-weight: 700; line-height: 1.4; margin-bottom: 7px; }
+  .task-meta { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  .tag { padding: 1px 6px; border-radius: 3px; font-family: 'DM Mono', monospace; font-size: 9px; color: white; }
   .tag.slack   { background: var(--tag-slack); }
   .tag.backlog { background: var(--tag-backlog); }
   .tag.verbal  { background: var(--tag-verbal); }
@@ -195,35 +192,18 @@
   .tag.saiyo   { background: var(--prod-saiyo); }
   .tag.wadax   { background: var(--prod-wadax); }
   .tag.cat     { background: none; border: 1px solid currentColor; color: var(--muted); font-size: 9px; }
-  .task-date { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+  .task-date { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
   .task-date.near { color: var(--accent2); font-weight: 500; }
 
-  .task-right { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
-  .status-badge { padding: 2px 9px; border-radius: 20px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.04em; border: 1px solid currentColor; white-space: nowrap; }
-  .status-wip     { color: #c0392b; border-color: #c0392b; background: #fdf0ef; font-weight:500; }
-  .status-review  { color: #c47a00; border-color: #c47a00; background: #fdf6e3; }
-  .status-done    { color: #999;    border-color: #ccc;    background: #f5f5f5; }
-  .status-waiting { color: #a0a0a0; border-color: #d0d0d0; }
-
-  .task-actions { display: flex; gap: 3px; }
-  .icon-btn { width: 24px; height: 24px; border: none; background: none; cursor: pointer; border-radius: 4px; font-size: 13px; color: var(--muted); display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
-  .icon-btn:hover { background: var(--line); }
-
-  .empty { text-align: center; padding: 44px 0; color: var(--muted); font-size: 13px; line-height: 2; }
-
-  .dot-anim { display: inline-flex; gap: 3px; }
-  .dot-anim span { width: 4px; height: 4px; border-radius: 50%; background: white; animation: blink 1.2s infinite; }
-  .dot-anim span:nth-child(2) { animation-delay: 0.2s; }
-  .dot-anim span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes blink { 0%,80%,100%{opacity:0.3} 40%{opacity:1} }
+  .col-empty { text-align: center; padding: 20px 0; color: var(--muted); font-size: 11px; font-family: 'DM Mono', monospace; }
 
   /* ── Detail Panel ── */
   .detail-panel {
     position: fixed;
-    top: 53px;
+    top: 49px;
     right: 0;
     width: var(--panel-w);
-    height: calc(100vh - 53px);
+    height: calc(100vh - 49px);
     background: var(--card);
     border-left: 1px solid var(--line);
     z-index: 90;
@@ -235,199 +215,85 @@
   }
   .detail-panel.open { transform: translateX(0); }
 
-  .panel-header {
-    padding: 18px 20px 14px;
-    border-bottom: 1px solid var(--line);
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    position: sticky;
-    top: 0;
-    background: var(--card);
-    z-index: 1;
-  }
-
-  .panel-title {
-    flex: 1;
-    font-family: 'Shippori Mincho', serif;
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 1.4;
-    outline: none;
-    border: none;
-    background: none;
-    color: var(--ink);
-    width: 100%;
-    cursor: text;
-    padding: 2px 4px;
-    border-radius: 3px;
-    transition: background 0.15s;
-  }
-  .panel-title:hover { background: var(--bg); }
-  .panel-title:focus { background: var(--bg); }
-
-  .panel-close {
-    width: 26px;
-    height: 26px;
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-size: 16px;
-    color: var(--muted);
-    flex-shrink: 0;
-    border-radius: 4px;
-    transition: background 0.15s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+  .panel-header { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); display: flex; align-items: flex-start; gap: 10px; position: sticky; top: 0; background: var(--card); z-index: 1; }
+  .panel-title { flex: 1; font-family: 'Shippori Mincho', serif; font-size: 14px; font-weight: 600; line-height: 1.4; outline: none; border: none; background: none; color: var(--ink); width: 100%; cursor: text; padding: 2px 4px; border-radius: 3px; transition: background 0.15s; }
+  .panel-title:hover, .panel-title:focus { background: var(--bg); }
+  .panel-close { width: 24px; height: 24px; border: none; background: none; cursor: pointer; font-size: 15px; color: var(--muted); flex-shrink: 0; border-radius: 4px; transition: background 0.15s; display: flex; align-items: center; justify-content: center; }
   .panel-close:hover { background: var(--line); }
+  .panel-body { padding: 14px 18px; flex: 1; }
 
-  .panel-body { padding: 16px 20px; flex: 1; }
-
-  /* Status switcher */
-  .panel-status-row {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-  }
-  .status-chip {
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    border: 1px solid var(--line);
-    background: none;
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.15s;
-  }
+  .panel-status-row { display: flex; gap: 5px; margin-bottom: 16px; flex-wrap: wrap; }
+  .status-chip { padding: 4px 11px; border-radius: 20px; font-family: 'DM Mono', monospace; font-size: 10px; border: 1px solid var(--line); background: none; color: var(--muted); cursor: pointer; transition: all 0.15s; }
   .status-chip:hover { border-color: #aaa; }
-  .status-chip.active-wip     { border-color: #c0392b; color: #c0392b; background: #fdf0ef; font-weight:500; }
-  .status-chip.active-review  { border-color: #c47a00; color: #c47a00; background: #fdf6e3; }
-  .status-chip.active-done    { border-color: #999;    color: #999;    background: #f5f5f5; }
-  .status-chip.active-waiting { border-color: #a0a0a0; color: #a0a0a0; background: #f0ede8; }
+  .status-chip.active-wip    { border-color: var(--col-wip);    color: var(--col-wip);    background: #fdf0ef; font-weight:500; }
+  .status-chip.active-review { border-color: var(--col-review); color: var(--col-review); background: #fdf6e3; }
+  .status-chip.active-done   { border-color: var(--col-done);   color: var(--col-done);   background: #f5f5f5; }
+  .status-chip.active-hold   { border-color: var(--col-hold);   color: var(--col-hold);   background: #f0ede8; }
 
-  /* Panel fields */
-  .panel-field { margin-bottom: 14px; }
-  .panel-field-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 5px;
-  }
-  .panel-input {
-    width: 100%;
-    padding: 7px 9px;
-    background: var(--bg);
-    border: 1px solid transparent;
-    border-radius: 4px;
-    font-family: 'Zen Kaku Gothic New', sans-serif;
-    font-size: 13px;
-    color: var(--ink);
-    transition: border-color 0.15s, background 0.15s;
-    cursor: text;
-  }
+  .panel-field { margin-bottom: 12px; }
+  .panel-field-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .panel-input { width: 100%; padding: 6px 9px; background: var(--bg); border: 1px solid transparent; border-radius: 4px; font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 12px; color: var(--ink); transition: border-color 0.15s; }
   .panel-input:hover { border-color: var(--line); }
   .panel-input:focus { outline: none; border-color: var(--accent); background: #fff; }
   select.panel-input { cursor: pointer; }
-
   .panel-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .panel-divider { height: 1px; background: var(--line); margin: 14px 0; }
 
-  .panel-divider { height: 1px; background: var(--line); margin: 18px 0; }
-
-  .panel-footer {
-    padding: 14px 20px;
-    border-top: 1px solid var(--line);
-    display: flex;
-    gap: 8px;
-    background: var(--card);
-    position: sticky;
-    bottom: 0;
-  }
-  .btn-save {
-    flex: 1;
-    padding: 9px;
-    background: var(--ink);
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    cursor: pointer;
-    transition: opacity 0.2s;
-  }
+  .panel-footer { padding: 12px 18px; border-top: 1px solid var(--line); display: flex; gap: 8px; background: var(--card); position: sticky; bottom: 0; }
+  .btn-save { flex: 1; padding: 8px; background: var(--ink); color: white; border: none; border-radius: 5px; font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: opacity 0.2s; }
   .btn-save:hover { opacity: 0.75; }
-  .btn-delete-sm {
-    padding: 9px 14px;
-    background: none;
-    color: var(--accent2);
-    border: 1px solid var(--accent2);
-    border-radius: 5px;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
+  .btn-delete-sm { padding: 8px 12px; background: none; color: var(--accent2); border: 1px solid var(--accent2); border-radius: 5px; font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all 0.15s; }
   .btn-delete-sm:hover { background: var(--accent2); color: white; }
 
-  /* Modal */
+  /* ── Modal ── */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(26,23,20,0.5); z-index: 200; align-items: center; justify-content: center; }
   .modal-overlay.open { display: flex; }
-  .modal { background: var(--card); border-radius: 10px; padding: 26px; width: 460px; max-width: 92vw; max-height: 82vh; overflow-y: auto; }
-  .modal-title { font-family: 'Shippori Mincho', serif; font-size: 17px; margin-bottom: 18px; }
-  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-  .field-group { margin-bottom: 12px; }
-  .field-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
-  .field-input { width: 100%; padding: 7px 10px; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 13px; color: var(--ink); }
+  .modal { background: var(--card); border-radius: 10px; padding: 24px; width: 440px; max-width: 92vw; max-height: 85vh; overflow-y: auto; }
+  .modal-title { font-family: 'Shippori Mincho', serif; font-size: 16px; margin-bottom: 16px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .field-group { margin-bottom: 10px; }
+  .field-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .field-input { width: 100%; padding: 7px 9px; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 12px; color: var(--ink); }
   .field-input:focus { outline: none; border-color: var(--accent); }
   select.field-input { cursor: pointer; }
-  .modal-actions { display: flex; gap: 8px; margin-top: 18px; justify-content: flex-end; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
+  .btn-confirm { padding: 7px 14px; background: var(--accent); color: white; border: none; border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; }
+  .btn-cancel  { padding: 7px 14px; background: none; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; }
 
-  .toast { position: fixed; bottom: 22px; right: 22px; background: var(--ink); color: white; padding: 9px 16px; border-radius: 6px; font-family: 'DM Mono', monospace; font-size: 12px; z-index: 300; transform: translateY(60px); opacity: 0; transition: all 0.3s; }
+  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 190; }
+  .sidebar-overlay.open { display: block; }
+
+  .toast { position: fixed; bottom: 20px; right: 20px; background: var(--ink); color: white; padding: 8px 16px; border-radius: 6px; font-family: 'DM Mono', monospace; font-size: 11px; z-index: 300; transform: translateY(60px); opacity: 0; transition: all 0.3s; }
   .toast.show { transform: translateY(0); opacity: 1; }
+
+  @media (max-width: 700px) {
+    .app { grid-template-columns: 1fr; }
+    .hamburger { display: flex; }
+    .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; z-index: 200; transform: translateX(-100%); transition: transform 0.28s ease; padding-top: 56px; }
+    .sidebar.open { transform: translateX(0); box-shadow: 4px 0 20px rgba(0,0,0,0.15); }
+    .kanban { grid-template-columns: repeat(4, minmax(200px, 1fr)); }
+    .detail-panel { width: 100vw; }
+  }
 </style>
 </head>
 <body>
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-<div class="layout" id="layout">
+<div class="app">
   <header>
-    <button class="hamburger" onclick="toggleSidebar()" id="hamburger">
-      <span></span><span></span><span></span>
-    </button>
+    <button class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
     <div class="logo">TAKAHASHI <span>TASK</span></div>
     <div class="header-date" id="headerDate"></div>
-    <button class="btn-ai" onclick="openNewModal()" style="margin-left:16px;padding:6px 13px;font-size:10px;">+ 手動で追加</button>
+    <button class="btn-add" onclick="openNewModal()">+ 手動で追加</button>
   </header>
 
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-section">
-      <div class="sidebar-label">ステータス</div>
-      <button class="filter-btn active" onclick="setFilter('all','status',this)">
+      <div class="sidebar-label">商材</div>
+      <button class="filter-btn active" onclick="setFilter('all','all',this)">
         <span>すべて</span><span class="count" id="cnt-all">0</span>
       </button>
-      <button class="filter-btn" onclick="setFilter('waiting','status',this)">
-        <span>待機中</span><span class="count" id="cnt-waiting">0</span>
-      </button>
-      <button class="filter-btn" onclick="setFilter('wip','status',this)">
-        <span>進行中</span><span class="count" id="cnt-wip">0</span>
-      </button>
-      <button class="filter-btn" onclick="setFilter('review','status',this)">
-        <span>確認待ち</span><span class="count" id="cnt-review">0</span>
-      </button>
-      <button class="filter-btn" onclick="setFilter('done','status',this)">
-        <span>完了</span><span class="count" id="cnt-done">0</span>
-      </button>
-    </div>
-    <div class="sidebar-divider"></div>
-    <div class="sidebar-section">
-      <div class="sidebar-label">商材</div>
       <button class="filter-btn" onclick="setFilter('sign','product',this)">
         <span class="dot" style="background:var(--prod-sign)"></span><span>GMOサイン</span><span class="count" id="cnt-sign">0</span>
       </button>
@@ -479,11 +345,36 @@
   </aside>
 
   <main>
-    <div class="section-header">
-      <div class="section-title" id="sectionTitle">全案件</div>
-      <div class="section-count" id="sectionCount"></div>
+    <div class="kanban" id="kanban">
+      <div class="kanban-col col-wip">
+        <div class="kanban-col-header">
+          <span class="col-label">進行中</span>
+          <span class="col-count" id="hd-wip">0</span>
+        </div>
+        <div class="kanban-cards" id="col-wip"></div>
+      </div>
+      <div class="kanban-col col-review">
+        <div class="kanban-col-header">
+          <span class="col-label">確認中</span>
+          <span class="col-count" id="hd-review">0</span>
+        </div>
+        <div class="kanban-cards" id="col-review"></div>
+      </div>
+      <div class="kanban-col col-done">
+        <div class="kanban-col-header">
+          <span class="col-label">完了</span>
+          <span class="col-count" id="hd-done">0</span>
+        </div>
+        <div class="kanban-cards" id="col-done"></div>
+      </div>
+      <div class="kanban-col col-hold">
+        <div class="kanban-col-header">
+          <span class="col-label">保留</span>
+          <span class="col-count" id="hd-hold">0</span>
+        </div>
+        <div class="kanban-cards" id="col-hold"></div>
+      </div>
     </div>
-    <div class="task-list" id="taskList"></div>
   </main>
 </div>
 
@@ -494,14 +385,12 @@
     <button class="panel-close" onclick="closePanel()">✕</button>
   </div>
   <div class="panel-body">
-    <!-- Status chips -->
     <div class="panel-status-row" id="statusChips">
-      <button class="status-chip" data-s="waiting" onclick="setStatus('waiting')">待機中</button>
-      <button class="status-chip" data-s="wip"     onclick="setStatus('wip')">進行中</button>
-      <button class="status-chip" data-s="review"  onclick="setStatus('review')">確認待ち</button>
-      <button class="status-chip" data-s="done"    onclick="setStatus('done')">完了</button>
+      <button class="status-chip" data-s="wip"    onclick="setStatus('wip')">進行中</button>
+      <button class="status-chip" data-s="review" onclick="setStatus('review')">確認中</button>
+      <button class="status-chip" data-s="done"   onclick="setStatus('done')">完了</button>
+      <button class="status-chip" data-s="hold"   onclick="setStatus('hold')">保留</button>
     </div>
-
     <div class="panel-row">
       <div class="panel-field">
         <div class="panel-field-label">商材</div>
@@ -526,7 +415,6 @@
         </select>
       </div>
     </div>
-
     <div class="panel-row">
       <div class="panel-field">
         <div class="panel-field-label">依頼経路</div>
@@ -542,25 +430,21 @@
         <input class="panel-input" id="p-client" type="text" placeholder="田中さん">
       </div>
     </div>
-
     <div class="panel-field">
       <div class="panel-field-label">依頼元 URL</div>
       <div style="display:flex;gap:6px;align-items:center">
         <input class="panel-input" id="p-source-url" type="url" placeholder="https://xxx.backlog.com/view/PROJ-123" style="flex:1">
-        <a id="p-source-url-link" href="#" target="_blank" style="display:none;color:var(--accent);font-size:18px;text-decoration:none;flex-shrink:0" title="開く">↗</a>
+        <a id="p-source-url-link" href="#" target="_blank" style="display:none;color:var(--accent);font-size:18px;text-decoration:none;flex-shrink:0">↗</a>
       </div>
     </div>
-
     <div class="panel-field">
       <div class="panel-field-label">作業場所</div>
       <div style="display:flex;gap:6px;align-items:center">
-        <input class="panel-input" id="p-work-url" type="text" placeholder="https://figma.com/... または「社内サーバー/project/...」" style="flex:1">
-        <a id="p-work-url-link" href="#" target="_blank" style="display:none;color:var(--accent);font-size:18px;text-decoration:none;flex-shrink:0" title="開く">↗</a>
+        <input class="panel-input" id="p-work-url" type="text" placeholder="https://figma.com/... または メモ" style="flex:1">
+        <a id="p-work-url-link" href="#" target="_blank" style="display:none;color:var(--accent);font-size:18px;text-decoration:none;flex-shrink:0">↗</a>
       </div>
     </div>
-
     <div class="panel-divider"></div>
-
     <div class="panel-field">
       <div class="panel-field-label">受注日</div>
       <input class="panel-input" id="p-received" type="date">
@@ -575,12 +459,10 @@
         <input class="panel-input" id="p-fix" type="date">
       </div>
     </div>
-
     <div class="panel-divider"></div>
-
     <div class="panel-field">
       <div class="panel-field-label">メモ</div>
-      <input class="panel-input" id="p-memo" type="text" placeholder="関連リンクや補足など">
+      <input class="panel-input" id="p-memo" type="text" placeholder="補足など">
     </div>
   </div>
   <div class="panel-footer">
@@ -589,10 +471,10 @@
   </div>
 </div>
 
-<!-- New/Edit Modal (手動追加用) -->
+<!-- Modal -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
-    <div class="modal-title" id="modalTitle">案件を追加</div>
+    <div class="modal-title">案件を追加</div>
     <div class="field-group">
       <div class="field-label">案件名</div>
       <input class="field-input" id="f-name" placeholder="GMOサイン LP制作">
@@ -621,7 +503,7 @@
         </select>
       </div>
     </div>
-    <div style="height:12px"></div>
+    <div style="height:10px"></div>
     <div class="field-row">
       <div class="field-group" style="margin-bottom:0">
         <div class="field-label">依頼経路</div>
@@ -637,7 +519,7 @@
         <input class="field-input" id="f-client" placeholder="田中さん">
       </div>
     </div>
-    <div style="height:12px"></div>
+    <div style="height:10px"></div>
     <div class="field-row">
       <div class="field-group" style="margin-bottom:0">
         <div class="field-label">受注日</div>
@@ -646,14 +528,14 @@
       <div class="field-group" style="margin-bottom:0">
         <div class="field-label">ステータス</div>
         <select class="field-input" id="f-status">
-          <option value="waiting">待機中</option>
           <option value="wip">進行中</option>
-          <option value="review">確認待ち</option>
+          <option value="review">確認中</option>
           <option value="done">完了</option>
+          <option value="hold">保留</option>
         </select>
       </div>
     </div>
-    <div style="height:12px"></div>
+    <div style="height:10px"></div>
     <div class="field-row">
       <div class="field-group" style="margin-bottom:0">
         <div class="field-label">初校締切</div>
@@ -664,10 +546,10 @@
         <input class="field-input" type="date" id="f-fix">
       </div>
     </div>
-    <div style="height:12px"></div>
+    <div style="height:10px"></div>
     <div class="field-group">
       <div class="field-label">メモ</div>
-      <input class="field-input" id="f-memo" placeholder="関連リンクや補足など">
+      <input class="field-input" id="f-memo" placeholder="補足など">
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
@@ -679,26 +561,19 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const STORAGE_KEY = 'workdesk_tasks_v2';
+const STORAGE_KEY = 'workdesk_tasks_v3';
 function loadTasks() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch { return []; } }
 function saveTasks(t) { localStorage.setItem(STORAGE_KEY, JSON.stringify(t)); }
 
 let tasks = loadTasks();
 let currentFilter = 'all';
-let currentFilterType = 'status';
+let currentFilterType = 'all';
 let panelTaskId = null;
-let pendingTask = null;
 
 const PRODUCT_LABEL  = { sign:'GMOサイン', corp:'コーポレート', way:'Way', saiyo:'採用', wadax:'WADAX' };
 const CATEGORY_LABEL = { web:'Web', illust:'イラスト', dtp:'DTP', bnr:'bnr', lp:'LP' };
 const SOURCE_LABEL   = { slack:'Slack', backlog:'Backlog', verbal:'口頭', other:'other' };
-const STATUS_LABEL   = { waiting:'待機中', wip:'進行中', review:'確認待ち', done:'完了' };
-const STATUS_CLASS   = { waiting:'status-waiting', wip:'status-wip', review:'status-review', done:'status-done' };
-
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebarOverlay').classList.toggle('open');
-}
+const STATUS_COLS    = ['wip','review','done','hold'];
 
 function today() { return new Date().toISOString().slice(0,10); }
 function daysUntil(d) {
@@ -719,124 +594,106 @@ function updateHeaderDate() {
     `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${days[d.getDay()]})`;
 }
 
-// ── Counts ──
 function updateCounts() {
   const s = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
   s('cnt-all', tasks.length);
-  ['waiting','wip','review','done'].forEach(x => s(`cnt-${x}`, tasks.filter(t=>t.status===x).length));
   ['sign','corp','way','saiyo','wadax'].forEach(x => s(`cnt-${x}`, tasks.filter(t=>t.product===x).length));
   ['web','illust','dtp','bnr','lp'].forEach(x => s(`cnt-${x}`, tasks.filter(t=>t.category===x).length));
   ['slack','backlog','verbal'].forEach(x => s(`cnt-${x}`, tasks.filter(t=>t.source===x).length));
 }
 
-// ── Filter ──
 function setFilter(f, type, btn) {
   currentFilter = f; currentFilterType = type;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   render();
 }
-function filterTasks() {
-  if (currentFilter === 'all') return tasks;
-  if (currentFilterType === 'status')   return tasks.filter(t=>t.status===currentFilter);
+
+function filteredTasks() {
+  if (currentFilterType === 'all') return tasks;
   if (currentFilterType === 'product')  return tasks.filter(t=>t.product===currentFilter);
   if (currentFilterType === 'category') return tasks.filter(t=>t.category===currentFilter);
   if (currentFilterType === 'source')   return tasks.filter(t=>t.source===currentFilter);
   return tasks;
 }
 
-// ── Render ──
 function render() {
   updateCounts();
-  const filtered = filterTasks();
-  const list  = document.getElementById('taskList');
-  const title = document.getElementById('sectionTitle');
-  const cnt   = document.getElementById('sectionCount');
-  const allLabels = { all:'全案件', waiting:'待機中', wip:'進行中', review:'確認待ち', done:'完了',
-    ...PRODUCT_LABEL, ...CATEGORY_LABEL,
-    slack:'Slack経由', backlog:'Backlog経由', verbal:'口頭・MTG経由' };
-  title.textContent = allLabels[currentFilter] || '案件一覧';
-  cnt.textContent = `${filtered.length}件`;
+  const visible = filteredTasks();
 
-  if (filtered.length === 0) {
-    list.innerHTML = '<div class="empty">案件がありません<br>上のフォームから追加してください</div>';
-    return;
-  }
+  STATUS_COLS.forEach(status => {
+    const col = document.getElementById(`col-${status}`);
+    const hd  = document.getElementById(`hd-${status}`);
+    const colTasks = visible
+      .filter(t => t.status === status)
+      .sort((a,b) => {
+        if (a.fix&&b.fix) return a.fix.localeCompare(b.fix);
+        if (a.fix) return -1; if (b.fix) return 1; return 0;
+      });
 
-  const statusOrder = { wip:0, review:1, done:2, waiting:3 };
-  const sorted = [...filtered].sort((a,b) => {
-    const so = (statusOrder[a.status]??9) - (statusOrder[b.status]??9);
-    if (so !== 0) return so;
-    if (a.fix&&b.fix) return a.fix.localeCompare(b.fix);
-    if (a.fix) return -1; if (b.fix) return 1; return 0;
-  });
+    hd.textContent = colTasks.length;
 
-  list.innerHTML = sorted.map(t => {
-    const days = daysUntil(t.fix);
-    const isUrgent = days!==null && days<=3 && t.status!=='done';
-    const dateNear = days!==null && days<=7 && t.status!=='done';
-    let dl = '';
-    if (t.fix) { if(days===0) dl='今日'; else if(days<0) dl=`${Math.abs(days)}日超過`; else dl=`${days}日後`; }
-    const prodTag = t.product ? `<span class="tag ${t.product}">${PRODUCT_LABEL[t.product]||t.product}</span>` : '';
-    const catTag  = t.category ? `<span class="tag cat">${CATEGORY_LABEL[t.category]||t.category}</span>` : '';
-    const isSelected = t.id === panelTaskId;
+    if (colTasks.length === 0) {
+      col.innerHTML = '<div class="col-empty">—</div>';
+      return;
+    }
 
-    return `<div class="task-card ${isUrgent?'urgent':''} ${t.status==='done'?'done':''} ${isSelected?'selected':''}"
-      onclick="openPanel('${t.id}')">
-      <div>
+    col.innerHTML = colTasks.map(t => {
+      const days = daysUntil(t.fix);
+      const isUrgent = days!==null && days<=3 && status!=='done';
+      const dateNear = days!==null && days<=7 && status!=='done';
+      let dl = '';
+      if (t.fix) { if(days===0) dl='今日'; else if(days<0) dl=`${Math.abs(days)}日超過`; else dl=`${days}日後`; }
+      const prodTag  = t.product  ? `<span class="tag ${t.product}">${PRODUCT_LABEL[t.product]}</span>` : '';
+      const catTag   = t.category ? `<span class="tag cat">${CATEGORY_LABEL[t.category]}</span>` : '';
+      const isSelected = t.id === panelTaskId;
+
+      return `<div class="task-card ${isUrgent?'urgent':''} ${isSelected?'selected':''}" onclick="openPanel('${t.id}')">
         <div class="task-name">${t.name||'（無題）'}</div>
         <div class="task-meta">
           ${prodTag}${catTag}
           ${t.client ? `<span class="task-date">${t.client}</span>` : ''}
-          ${t.received ? `<span class="task-date">受注 ${fmtDate(t.received)}</span>` : ''}
-          ${t.draft ? `<span class="task-date">初校 ${fmtDate(t.draft)}</span>` : ''}
           ${t.fix ? `<span class="task-date ${dateNear?'near':''}">Fix ${fmtDate(t.fix)}${dl?` (${dl})`:''}</span>` : ''}
         </div>
-        ${t.memo ? `<div class="task-date" style="margin-top:5px;font-size:11px">${t.memo}</div>` : ''}
-      </div>
-      <div class="task-right">
-        <span class="status-badge ${STATUS_CLASS[t.status]}">${STATUS_LABEL[t.status]}</span>
-      </div>
-    </div>`;
-  }).join('');
+      </div>`;
+    }).join('');
+  });
 }
 
-// ── Detail Panel ──
+// ── Panel ──
 function openPanel(id) {
   const t = tasks.find(t=>t.id===id);
   if (!t) return;
   panelTaskId = id;
+  document.getElementById('p-name').value      = t.name||'';
+  document.getElementById('p-product').value   = t.product||'';
+  document.getElementById('p-category').value  = t.category||'';
+  document.getElementById('p-source').value    = t.source||'slack';
+  document.getElementById('p-client').value    = t.client||'';
+  document.getElementById('p-source-url').value= t.sourceUrl||'';
+  document.getElementById('p-work-url').value  = t.workUrl||'';
+  document.getElementById('p-received').value  = t.received||'';
+  document.getElementById('p-draft').value     = t.draft||'';
+  document.getElementById('p-fix').value       = t.fix||'';
+  document.getElementById('p-memo').value      = t.memo||'';
+  updateStatusChips(t.status);
 
-  document.getElementById('p-name').value     = t.name||'';
-  document.getElementById('p-product').value  = t.product||'';
-  document.getElementById('p-category').value = t.category||'';
-  document.getElementById('p-source').value   = t.source||'slack';
-  document.getElementById('p-client').value   = t.client||'';
-  document.getElementById('p-source-url').value = t.sourceUrl||'';
-  document.getElementById('p-work-url').value   = t.workUrl||'';
-  document.getElementById('p-received').value = t.received||'';
-  document.getElementById('p-draft').value    = t.draft||'';
-  document.getElementById('p-fix').value      = t.fix||'';
-  document.getElementById('p-memo').value     = t.memo||'';
-
-  // リンクアイコンの表示切り替え
-  const sLink = document.getElementById('p-source-url-link');
-  const wLink = document.getElementById('p-work-url-link');
-  function updateLink(input, linkEl) {
-    const v = input.value.trim();
-    const isUrl = v.startsWith('http://') || v.startsWith('https://');
-    linkEl.style.display = (v && isUrl) ? 'inline' : 'none';
-    if (isUrl) linkEl.href = v;
-  }
   const sInput = document.getElementById('p-source-url');
   const wInput = document.getElementById('p-work-url');
+  const sLink  = document.getElementById('p-source-url-link');
+  const wLink  = document.getElementById('p-work-url-link');
+  function updateLink(input, link) {
+    const v = input.value.trim();
+    const isUrl = v.startsWith('http://') || v.startsWith('https://');
+    link.style.display = (v&&isUrl) ? 'inline' : 'none';
+    if (isUrl) link.href = v;
+  }
   updateLink(sInput, sLink); updateLink(wInput, wLink);
   sInput.oninput = () => updateLink(sInput, sLink);
   wInput.oninput = () => updateLink(wInput, wLink);
-  updateStatusChips(t.status);
 
   document.getElementById('detailPanel').classList.add('open');
-  render(); // update selected highlight
+  render();
 }
 
 function closePanel() {
@@ -854,7 +711,6 @@ function updateStatusChips(status) {
 
 function setStatus(s) {
   updateStatusChips(s);
-  // reflect immediately on the task card for feel-good UX, save on button press
   const t = tasks.find(t=>t.id===panelTaskId);
   if (t) { t.status = s; saveTasks(tasks); render(); }
 }
@@ -891,83 +747,18 @@ function deletePanelTask() {
   showToast('削除しました');
 }
 
-// ── AI ──
-async function analyzeWithAI() {
-  const raw = document.getElementById('rawInput').value.trim();
-  if (!raw) return;
-  const btn = document.getElementById('aiBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="dot-anim"><span></span><span></span><span></span></span>';
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: `あなたはインハウスデザイナーの案件管理アシスタントです。入力テキストから案件情報を抽出し、JSONのみで返してください。
-今日の日付: ${today()}
-商材: sign(GMOサイン), corp(コーポレート), way(Way), saiyo(採用), wadax(WADAX)
-カテゴリ: web, illust(イラスト), dtp, bnr(バナー), lp
-依頼経路: slack, backlog, verbal(口頭・MTG), other
-JSON: {"name":"","source":"","product":null,"category":null,"client":"","received":null,"draft":null,"fix":null,"status":"waiting","memo":""}
-JSONのみ返してください。`,
-        messages: [{ role:'user', content: raw }]
-      })
-    });
-    const data = await res.json();
-    const text = data.content.map(c=>c.text||'').join('');
-    const parsed = JSON.parse(text.replace(/```json|```/g,'').trim());
-    pendingTask = { ...parsed, id: crypto.randomUUID() };
-    showPreview(pendingTask);
-  } catch(e) { showToast('解析に失敗しました。もう一度お試しください。'); }
-  btn.disabled = false;
-  btn.textContent = 'AIで解析';
-}
-
-function showPreview(t) {
-  const html = [
-    ['案件名', t.name||'—'],
-    ['商材', t.product?(PRODUCT_LABEL[t.product]||t.product):'—'],
-    ['カテゴリ', t.category?(CATEGORY_LABEL[t.category]||t.category):'—'],
-    ['依頼経路', SOURCE_LABEL[t.source]||t.source],
-    ['依頼者', t.client||'—'],
-    ['受注日', t.received||'—'],
-    ['初校締切', t.draft||'—'],
-    ['Fix締切', t.fix||'—'],
-    ['メモ', t.memo||'—'],
-  ].map(([k,v])=>`<div class="preview-field"><span class="preview-key">${k}</span><span>${v}</span></div>`).join('');
-  document.getElementById('previewContent').innerHTML = html;
-  document.getElementById('previewArea').style.display = 'block';
-}
-
-function confirmAdd() {
-  if (!pendingTask) return;
-  tasks.unshift(pendingTask);
-  saveTasks(tasks);
-  pendingTask = null;
-  document.getElementById('previewArea').style.display = 'none';
-  document.getElementById('rawInput').value = '';
-  render();
-  showToast('案件を登録しました ✓');
-}
-function cancelPreview() {
-  pendingTask = null;
-  document.getElementById('previewArea').style.display = 'none';
-}
-
-// ── Modal (手動追加) ──
+// ── Modal ──
 function openNewModal() {
-  document.getElementById('f-name').value = '';
-  document.getElementById('f-product').value = '';
+  document.getElementById('f-name').value     = '';
+  document.getElementById('f-product').value  = '';
   document.getElementById('f-category').value = '';
-  document.getElementById('f-source').value = 'slack';
-  document.getElementById('f-client').value = '';
+  document.getElementById('f-source').value   = 'slack';
+  document.getElementById('f-client').value   = '';
   document.getElementById('f-received').value = today();
-  document.getElementById('f-draft').value = '';
-  document.getElementById('f-fix').value = '';
-  document.getElementById('f-status').value = 'waiting';
-  document.getElementById('f-memo').value = '';
+  document.getElementById('f-draft').value    = '';
+  document.getElementById('f-fix').value      = '';
+  document.getElementById('f-status').value   = 'wip';
+  document.getElementById('f-memo').value     = '';
   document.getElementById('modalOverlay').classList.add('open');
 }
 function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
@@ -984,6 +775,7 @@ function saveFromModal() {
     fix:      document.getElementById('f-fix').value,
     status:   document.getElementById('f-status').value,
     memo:     document.getElementById('f-memo').value.trim(),
+    sourceUrl: '', workUrl: '',
   };
   if (!t.name) { showToast('案件名を入力してください'); return; }
   tasks.unshift(t);
@@ -994,6 +786,11 @@ function saveFromModal() {
 }
 
 document.getElementById('modalOverlay').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
 
 function showToast(msg) {
   const el = document.getElementById('toast');
